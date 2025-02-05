@@ -160,6 +160,7 @@ Assets/StreamingAssets/
 .DS_Store
 Thumbs.db
 
-tasks.txt
 
 .env
+
+tasks.txt

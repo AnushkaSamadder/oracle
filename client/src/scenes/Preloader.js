@@ -34,8 +34,19 @@ export default class Preloader extends Phaser.Scene {
       progressBar.destroy();
       progressBox.destroy();
       loadingText.destroy();
+      // Check if the fallback NPC placeholder texture exists.
+      if (!this.textures.exists('npc_placeholder')) {
+        // Create a simple red square texture as a fallback.
+        const graphics = this.add.graphics();
+        graphics.fillStyle(0xff0000, 1);
+        graphics.fillRect(0, 0, 100, 100);
+        graphics.generateTexture('npc_placeholder', 100, 100);
+        graphics.destroy();
+        console.warn('npc_placeholder texture created as fallback.');
+      }
       console.log('All assets loaded successfully');
     });
+  
 
     this.load.on('loaderror', (file) => {
       console.error('Error loading asset:', file.key, file.src);

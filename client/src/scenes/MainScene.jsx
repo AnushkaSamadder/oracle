@@ -1,13 +1,9 @@
-import Phaser from 'phaser';
 
 export default class MainScene extends Phaser.Scene {
   constructor() {
     super('MainScene');
     this.npc = null;
-    // Default static questions - these will be replaced by dynamic questions if fetched successfully
-    // Question pool will store all available questions
-    this.questionPool = [];
-    // Default questions as fallback
+    // Default fallback questions (used if dynamic questions are not loaded).
     this.defaultQuestions = {
       gatherer: "How fixeth a frozen crystal ball?",
       graveDigger: "What dark arts revive a dead battery?",
@@ -21,26 +17,25 @@ export default class MainScene extends Phaser.Scene {
       nun: "How doth one purify a virus-infected device?",
       wanderer: "Which path leads through the maze of pop-up windows?"
     };
-    // Map to store current NPC-question assignments
+    // Map to store dynamically loaded questions (or fallback default)
     this.npcDialogues = { ...this.defaultQuestions };
+    this.npcTypes = []; // To be set in create()
+    // NEW: List of NPCs that loaded animations successfully
+    this.loadedNpcTypes = [];
     this.lastNpcKey = null;
     this.onPlayerAnswer = null;
-    this.npcTypes = []; // Will be set in create()
   }
 
-  preload() {
-    // ... existing preload code ...
-  }
 
   create() {
     const width = this.game.config.width;
     const height = this.game.config.height;
-
+    
+    // Set up background video and scaling (existing code)
     const bg = this.add.video(width / 2, height / 2, 'shopBg');
     bg.setOrigin(0.5);
     bg.setDepth(0);
     bg.play(true);
-
     bg.on('playing', () => {
       const video = bg.video;
       if (video && video.videoWidth && video.videoHeight) {
@@ -52,95 +47,134 @@ export default class MainScene extends Phaser.Scene {
         bg.setDisplaySize(width, height);
       }
     });
-
+    
+    // Define the full list of NPC types
     const npcTypes = [
       'gatherer', 'graveDigger', 'hunter', 'king', 'knight',
       'knightHorse', 'lumberjack', 'merchant', 'miner', 'nun', 'wanderer'
     ];
-
-    // Create animations for each NPC type (both walk and idle)
+    this.npcTypes = npcTypes;
+    
+    // Reset loadedNpcTypes
+    this.loadedNpcTypes = [];
+    
+    // Create animations for each NPC type.
     npcTypes.forEach((npcKey) => {
+      // Build walk frames array by checking if each frame texture exists.
+      let walkFrames = [];
+      for (let i = 0; i <= 10; i++) {
+        const frameKey = `${npcKey}-walk/frame_${i.toString().padStart(2, '0')}_delay-0.1s`;
+        if (this.textures.exists(frameKey)) {
+          walkFrames.push({ key: frameKey });
+        }
+      }
+      let walkFallbackUsed = false;
+      if (walkFrames.length === 0) {
+        walkFrames = [{ key: 'npc_placeholder' }];
+        walkFallbackUsed = true;
+        console.error(`Walk frames missing for ${npcKey}. Using placeholder.`);
+      }
       if (!this.anims.exists(`${npcKey}-walk`)) {
         this.anims.create({
           key: `${npcKey}-walk`,
-          frames: Array.from({ length: 11 }, (_, i) => ({ 
-            key: `${npcKey}-walk/frame_${i.toString().padStart(2, '0')}_delay-0.1s` 
-          })),
+          frames: walkFrames,
           frameRate: 10,
           repeat: -1
         });
+      }
+      
+      // Build idle frames array by checking if each frame texture exists.
+      let idleFrames = [];
+      for (let i = 0; i <= 6; i++) {
+        const frameKey = `${npcKey}-idle/frame_${i}_delay-0.1s`;
+        if (this.textures.exists(frameKey)) {
+          idleFrames.push({ key: frameKey });
+        }
+      }
+      let idleFallbackUsed = false;
+      if (idleFrames.length === 0) {
+        idleFrames = [{ key: 'npc_placeholder' }];
+        idleFallbackUsed = true;
+        console.error(`Idle frames missing for ${npcKey}. Using placeholder.`);
       }
       if (!this.anims.exists(`${npcKey}-idle`)) {
         this.anims.create({
           key: `${npcKey}-idle`,
-          frames: Array.from({ length: 7 }, (_, i) => ({ 
-            key: `${npcKey}-idle/frame_${i}_delay-0.1s` 
-          })),
+          frames: idleFrames,
           frameRate: 10,
           repeat: -1
         });
       }
+      
+      // Only add npcKey to loadedNpcTypes if BOTH idle and walk animations loaded real frames.
+      if (!walkFallbackUsed && !idleFallbackUsed) {
+        this.loadedNpcTypes.push(npcKey);
+        console.log(`NPC "${npcKey}" loaded successfully.`);
+      } else {
+        console.warn(`NPC "${npcKey}" will be excluded from spawn pool due to missing assets.`);
+      }
     });
-
-    this.npcTypes = npcTypes;
+    
     window.mainScene = this;
     window.mainSceneEvents = this.events;
     
-    // Show a loading text while fetching dynamic questions from the backend
+    // Show loading text while dynamic questions are being fetched.
     const loadingText = this.add.text(width / 2, height / 2, "Generating questions...", {
       font: "20px Arial",
       fill: "#ffffff"
     }).setOrigin(0.5);
-
-    // Fetch dynamic questions then spawn NPCs
+    
     this.loadQuestions().then(() => {
       loadingText.destroy();
+      // Start spawning using the filtered list if available.
       this.spawnNextNPC();
     }).catch((err) => {
-      console.error("Error loading questions, using default dialogues:", err);
+      console.error("Error loading questions, using defaults:", err);
       loadingText.destroy();
       this.spawnNextNPC();
     });
   }
 
-  // Method to fetch dynamic questions from the backend
+  // New method to fetch dynamic questions from the backend.
   async loadQuestions() {
-    // Request double the number of questions we need to have a good pool
+    // Request more questions than the number of NPCs for a good pool.
     const requestCount = this.npcTypes.length * 2;
     const url = `http://localhost:5000/generate-questions?count=${requestCount}`;
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error: ${response.status}`);
       }
       const data = await response.json();
       if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
-        // Reset the question pool with new questions
+        // Store the questions in a pool for use—later each spawned NPC will take a random question.
         this.questionPool = [...data.questions];
-        console.log("New question pool loaded:", this.questionPool);
+        console.log("Dynamic question pool loaded:", this.questionPool);
       } else {
         throw new Error("No valid questions returned from API");
       }
     } catch (error) {
-      console.error("Error fetching dynamic questions:", error);
-      // If an error occurs, the default static dialogues remain
+      console.error("Error fetching questions:", error);
+      // Fallback: use default questions as pool.
+      this.questionPool = Object.values(this.defaultQuestions);
     }
   }
 
   spawnNextNPC() {
+    let availableNpcTypes = this.loadedNpcTypes.length > 0 ? this.loadedNpcTypes : this.npcTypes;
     let npcKey;
     do {
-      npcKey = Phaser.Math.RND.pick(this.npcTypes);
-    } while (this.lastNpcKey === npcKey && this.npcTypes.length > 1);
+      npcKey = Phaser.Math.RND.pick(availableNpcTypes);
+    } while (this.lastNpcKey === npcKey && availableNpcTypes.length > 1);
     
     this.lastNpcKey = npcKey;
+    
     const idleKey = `${npcKey}-idle/frame_0_delay-0.1s`;
     const walkKey = `${npcKey}-walk/frame_00_delay-0.1s`;
     
     if (!this.textures.exists(idleKey) || !this.textures.exists(walkKey)) {
-      console.log(`idleKey: ${idleKey}, walkKey: ${walkKey}`);
-      console.log(`Available textures:`, this.textures.list);
-      console.error(`Required textures not found for ${npcKey}`);
+      console.error(`Required textures not found for ${npcKey}. Idle: ${idleKey}, Walk: ${walkKey}`);
+      // Retry after a short delay.
       this.time.delayedCall(1000, () => this.spawnNextNPC());
       return;
     }
@@ -176,9 +210,9 @@ export default class MainScene extends Phaser.Scene {
         onComplete: () => {
           this.npc.play(`${npcKey}-idle`);
           if (window.dialogueCallbacks?.onShowDialogue) {
-            // Get a random question from the pool
+            // Use a random question from the pool and remove it.
             let question;
-            if (this.questionPool.length > 0) {
+            if (this.questionPool && this.questionPool.length > 0) {
               // Get random index
               const randomIndex = Math.floor(Math.random() * this.questionPool.length);
               // Remove and get the question
@@ -218,6 +252,4 @@ export default class MainScene extends Phaser.Scene {
       });
     });
   }
-
-  // ... any additional methods or code ...
 }

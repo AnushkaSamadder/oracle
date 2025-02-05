@@ -113,7 +113,7 @@ const DialogueBox = ({
         }}>
           {villagerReaction && (
             <p style={{
-              fontSize: '18px',
+              fontSize: '18px', 
               fontFamily: '"MedievalSharp", cursive',
               marginBottom: '15px',
               color: '#4B2504',
