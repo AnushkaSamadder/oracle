@@ -11,16 +11,16 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative; /* Add this */
+  position: relative; /* This is important for absolute positioning of children */
 }
 
-/* Add styles for the dialogue container */
+/* Update dialogue container positioning */
 #dialogue-container {
   position: fixed;
-  bottom: 50px;
+  top: 20%; /* Adjust this value to position it higher */
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 1000; /* Ensure it's above other elements */
   width: 60%;
   max-width: 800px;
   min-width: 300px;

@@ -4,7 +4,19 @@ export default class MainScene extends Phaser.Scene {
   constructor() {
     super('MainScene');
     this.npc = null;
-    this.npcDialogues = {};
+    this.npcDialogues = {
+      gatherer: "How fixeth a frozen crystal ball?",
+      graveDigger: "What dark arts revive a dead battery?",
+      hunter: "How doth one track the elusive wireless signal?",
+      king: "Wherefore doth mine royal email refuse to send?",
+      knight: "How might one vanquish the dreaded blue screen of death?",
+      knightHorse: "What sorcery makes mine steed's GPS falter?",
+      lumberjack: "How sharpeneth one the edges of pixelated images?",
+      merchant: "Wherefore do mine online transactions fail?",
+      miner: "What pickaxe best mines cryptocurrency?",
+      nun: "How doth one purify a virus-infected device?",
+      wanderer: "Which path leads through the maze of pop-up windows?"
+    };
     this.lastNpcKey = null; // Initialize lastNpcKey here
   }
 
@@ -119,6 +131,11 @@ export default class MainScene extends Phaser.Scene {
 
     // Expose this scene globally so that React components can access its events.
     window.mainScene = this;
+    window.mainSceneEvents = this.events;  // Explicitly expose the events object
+    console.log('MainScene and events exposed to window:', { 
+      scene: window.mainScene, 
+      events: window.mainSceneEvents 
+    });
 
     // Start the first NPC.
     this.spawnNextNPC();
@@ -194,14 +211,18 @@ export default class MainScene extends Phaser.Scene {
 
         // Show NPC dialogue by emitting an event.
         const question = this.npcDialogues[npcKey];
-        console.log('Emitting showDialogue event with question:', question);
-        this.events.emit('showDialogue', { question });
+        console.log('Calling onShowDialogue callback with question:', question);
+        if (window.dialogueCallbacks && typeof window.dialogueCallbacks.onShowDialogue === 'function') {
+          window.dialogueCallbacks.onShowDialogue(question);
+        }
 
         // Listen for the player's answer (only once).
-        this.events.once('playerAnswer', (answer) => {
-          console.log('Received playerAnswer event with answer:', answer);
-          this.events.emit('hideDialogue');
-
+        this.onPlayerAnswer = (answer) => {
+          console.log('Received player answer via callback:', answer);
+          // Hide dialogue via callback.
+          if (window.dialogueCallbacks && typeof window.dialogueCallbacks.onHideDialogue === 'function') {
+            window.dialogueCallbacks.onHideDialogue();
+          }
           // NPC exits: face right and play the walk animation.
           this.npc.setFlipX(false);
           this.npc.play(`${npcKey}_walk`);
@@ -221,7 +242,7 @@ export default class MainScene extends Phaser.Scene {
               });
             }
           });
-        });
+        };
       }
     });
   }
