@@ -7,31 +7,59 @@ function App() {
   // Hold dialogue state in React
   const [dialogue, setDialogue] = useState({ visible: false, question: '' });
   const [showAnswerInput, setShowAnswerInput] = useState(false);
+  const [analysis, setAnalysis] = useState("");
+  const [evaluationLoading, setEvaluationLoading] = useState(false);
+  const [userAnswer, setUserAnswer] = useState("");
 
-  // Memoize callbacks to prevent unnecessary re-renders
+  // Callback to show dialogue – called from MainScene
   const onShowDialogue = useCallback((question) => {
     setDialogue({ visible: true, question });
     setShowAnswerInput(false);
+    setAnalysis("");
+    setUserAnswer("");
   }, []);
 
+  // Callback to hide dialogue – called from MainScene or after answer dismissal
   const onHideDialogue = useCallback(() => {
     setDialogue({ visible: false, question: '' });
     setShowAnswerInput(false);
+    setAnalysis("");
+    setUserAnswer("");
   }, []);
 
-  const onSubmitAnswer = useCallback((answer) => {
-    console.log('User submitted answer:', answer);
+  // Callback when the user submits an answer in the DialogueBox.
+  // It calls the /evaluate endpoint and stores the evaluation feedback.
+  const onSubmitAnswer = useCallback(async (answer) => {
+    setEvaluationLoading(true);
+    setUserAnswer(answer);
+    try {
+      const res = await fetch('http://localhost:5000/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: dialogue.question, answer })
+      });
+      const data = await res.json();
+      setAnalysis(data.feedback || "No feedback available.");
+    } catch (err) {
+      console.error("Evaluation error:", err);
+      setAnalysis("Evaluation error occurred.");
+    } finally {
+      setEvaluationLoading(false);
+    }
+  }, [dialogue.question]);
+
+  // Callback when the user dismisses the analysis view.
+  // This calls MainScene's onPlayerAnswer to resume the NPC's exit.
+  const onDismissAnalysis = useCallback(() => {
     if (window.mainScene && typeof window.mainScene.onPlayerAnswer === 'function') {
-      window.mainScene.onPlayerAnswer(answer);
+      window.mainScene.onPlayerAnswer(userAnswer);
     }
     onHideDialogue();
-  }, [onHideDialogue]);
+  }, [userAnswer, onHideDialogue]);
 
   useEffect(() => {
-    // Expose these callbacks so that Phaser's MainScene can call them.
+    // Expose these callbacks so that Phaser’s MainScene can call them.
     window.dialogueCallbacks = { onShowDialogue, onHideDialogue };
-    
-    // Cleanup on unmount
     return () => {
       window.dialogueCallbacks = null;
     };
@@ -46,6 +74,9 @@ function App() {
           showAnswerInput={showAnswerInput} 
           setShowAnswerInput={setShowAnswerInput}
           onSubmitAnswer={onSubmitAnswer}
+          analysis={analysis}
+          evaluationLoading={evaluationLoading}
+          onDismissAnalysis={onDismissAnalysis}
         />
       </ErrorBoundary>
     </div>

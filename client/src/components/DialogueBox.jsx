@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 
-const DialogueBox = ({ dialogue, showAnswerInput, setShowAnswerInput, onSubmitAnswer }) => {
+const DialogueBox = ({
+  dialogue,
+  showAnswerInput,
+  setShowAnswerInput,
+  onSubmitAnswer,
+  analysis,
+  evaluationLoading,
+  onDismissAnalysis
+}) => {
   const [answer, setAnswer] = useState('');
 
   if (!dialogue.visible) return null;
@@ -22,15 +30,15 @@ const DialogueBox = ({ dialogue, showAnswerInput, setShowAnswerInput, onSubmitAn
       alignItems: 'center',
       gap: '20px',
       zIndex: 9999,
-      backgroundColor: '#f4d03f',  // Parchment yellow
+      backgroundColor: '#f4d03f',  /* Parchment yellow */
       backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
-      backgroundSize: '20px 20px',  // Create a subtle paper texture
+      backgroundSize: '20px 20px',
       padding: '30px',
-      border: '8px double #8B4513',  // Double border for ornate look
+      border: '8px double #8B4513',
       borderRadius: '4px',
-      boxShadow: '0 0 20px rgba(0,0,0,0.3), inset 0 0 30px rgba(139,69,19,0.2)',  // Outer and inner shadow
+      boxShadow: '0 0 20px rgba(0,0,0,0.3), inset 0 0 30px rgba(139,69,19,0.2)',
       minWidth: '300px',
-      fontFamily: '"IM Fell English", Georgia, serif',  // Old-style font
+      fontFamily: '"IM Fell English", Georgia, serif',
       color: '#4B2504'
     }}>
       {/* Question Box */}
@@ -41,9 +49,7 @@ const DialogueBox = ({ dialogue, showAnswerInput, setShowAnswerInput, onSubmitAn
         padding: '20px 40px',
         marginBottom: '20px'
       }}>
-        {/* Decorative elements */}
         <div style={{
-          content: '""',
           position: 'absolute',
           top: 0,
           left: 0,
@@ -60,7 +66,6 @@ const DialogueBox = ({ dialogue, showAnswerInput, setShowAnswerInput, onSubmitAn
           textShadow: '1px 1px 0 rgba(255,255,255,0.5)'
         }}>{dialogue.question}</p>
         <div style={{
-          content: '""',
           position: 'absolute',
           bottom: 0,
           left: 0,
@@ -71,89 +76,133 @@ const DialogueBox = ({ dialogue, showAnswerInput, setShowAnswerInput, onSubmitAn
         }} />
       </div>
 
-      {/* Answer Section */}
-      {!showAnswerInput ? (
-        <button 
-          onClick={() => setShowAnswerInput(true)}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            backgroundColor: '#8B4513',
-            color: '#f4d03f',
-            border: '2px solid #5C2C0C',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '10px',
-            fontFamily: '"IM Fell English", Georgia, serif',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            transition: 'all 0.3s ease',
-            textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-          }}
-        >
-          Answer Question
-        </button>
-      ) : (
-        <form onSubmit={handleSubmit} style={{
-          width: '100%',
-          display: 'flex',
-          gap: '10px',
-          justifyContent: 'center'
+      {/* Evaluation Loading / Analysis Display */}
+      {evaluationLoading ? (
+        <div style={{
+          fontSize: '16px',
+          fontFamily: '"IM Fell English", Georgia, serif',
+          color: '#4B2504'
         }}>
-          <input
-            id="answer-input"
-            type="text"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-            placeholder="Type your answer in Shakespearean English..."
-            aria-label="Your answer in Shakespearean English"
+          Evaluating your answer...
+        </div>
+      ) : analysis ? (
+        <div style={{
+          padding: '20px',
+          border: '2px solid #8B4513',
+          borderRadius: '4px',
+          backgroundColor: '#fff9e6',
+          color: '#4B2504',
+          fontFamily: '"IM Fell English", Georgia, serif'
+        }}>
+          <p style={{ fontWeight: 'bold', fontSize: '18px' }}>Evaluation:</p>
+          <p style={{ fontSize: '16px' }}>{analysis}</p>
+          <button 
+            onClick={onDismissAnalysis}
             style={{
-              width: '70%',
-              padding: '12px',
+              padding: '12px 24px',
               fontSize: '16px',
-              backgroundColor: '#fff9e6',
-              border: '2px solid #8B4513',
+              backgroundColor: '#8B4513',
+              color: '#f4d03f',
+              border: '2px solid #5C2C0C',
               borderRadius: '4px',
+              cursor: 'pointer',
+              marginTop: '10px',
               fontFamily: '"IM Fell English", Georgia, serif',
-              color: '#4B2504',
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)',
-              outline: 'none'
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+              transition: 'all 0.3s ease',
+              textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
             }}
-            autoFocus
-          />
-          <button type="submit" style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            backgroundColor: '#8B4513',
-            color: '#f4d03f',
-            border: '2px solid #5C2C0C',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontFamily: '"IM Fell English", Georgia, serif',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            transition: 'all 0.3s ease',
-            textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
-          }}>
-            Submit
+          >
+            Continue
           </button>
-        </form>
+        </div>
+      ) : (
+        // Answer Section
+        !showAnswerInput ? (
+          <button 
+            onClick={() => setShowAnswerInput(true)}
+            style={{
+              padding: '12px 24px',
+              fontSize: '16px',
+              backgroundColor: '#8B4513',
+              color: '#f4d03f',
+              border: '2px solid #5C2C0C',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginTop: '10px',
+              fontFamily: '"IM Fell English", Georgia, serif',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+              transition: 'all 0.3s ease',
+              textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            }}
+          >
+            Answer Question
+          </button>
+        ) : (
+          <form onSubmit={handleSubmit} style={{
+            width: '100%',
+            display: 'flex',
+            gap: '10px',
+            justifyContent: 'center'
+          }}>
+            <input
+              id="answer-input"
+              type="text"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Enter thy counsel..."
+              aria-label="Your answer in Shakespearean English"
+              style={{
+                width: '70%',
+                padding: '12px',
+                fontSize: '16px',
+                backgroundColor: '#fff9e6',
+                border: '2px solid #8B4513',
+                borderRadius: '4px',
+                fontFamily: '"IM Fell English", Georgia, serif',
+                color: '#4B2504',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)',
+                outline: 'none'
+              }}
+              autoFocus
+            />
+            <button type="submit" style={{
+              padding: '12px 24px',
+              fontSize: '16px',
+              backgroundColor: '#8B4513',
+              color: '#f4d03f',
+              border: '2px solid #5C2C0C',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontFamily: '"IM Fell English", Georgia, serif',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+              transition: 'all 0.3s ease',
+              textShadow: '1px 1px 0 rgba(0,0,0,0.5)'
+            }}>
+              Submit
+            </button>
+          </form>
+        )
       )}
     </div>
   );
