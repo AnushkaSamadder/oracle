@@ -13,6 +13,22 @@ const DialogueBox = ({
 
   if (!dialogue.visible) return null;
 
+  // Compute villager reaction based on evaluation score when analysis is available
+  let villagerReaction = null;
+  if (analysis && !evaluationLoading) {
+    const scoreMatch = analysis.match(/Score:\s*(\d+)/);
+    if (scoreMatch) {
+      const score = parseInt(scoreMatch[1], 10);
+      if (score >= 75) {
+        villagerReaction = "Verily, the villager's face doth shine with the radiance of thy wise counsel!";
+      } else if (score >= 50) {
+        villagerReaction = "The villager pondereth thy words with measured contemplation.";
+      } else {
+        villagerReaction = "Alas, the villager's countenance darkens at thy questionable wisdom.";
+      }
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmitAnswer(answer);
@@ -60,10 +76,11 @@ const DialogueBox = ({
         }} />
         <p style={{ 
           margin: '10px 0',
-          fontSize: '20px',
+          fontSize: '24px',
           fontWeight: 'bold',
           lineHeight: '1.4',
-          textShadow: '1px 1px 0 rgba(255,255,255,0.5)'
+          textShadow: '1px 1px 0 rgba(255,255,255,0.5)',
+          fontFamily: '"MedievalSharp", cursive'
         }}>{dialogue.question}</p>
         <div style={{
           position: 'absolute',
@@ -80,7 +97,7 @@ const DialogueBox = ({
       {evaluationLoading ? (
         <div style={{
           fontSize: '16px',
-          fontFamily: '"IM Fell English", Georgia, serif',
+          fontFamily: '"Caudex", serif',
           color: '#4B2504'
         }}>
           Evaluating your answer...
@@ -94,8 +111,30 @@ const DialogueBox = ({
           color: '#4B2504',
           fontFamily: '"IM Fell English", Georgia, serif'
         }}>
-          <p style={{ fontWeight: 'bold', fontSize: '18px' }}>Evaluation:</p>
-          <p style={{ fontSize: '16px' }}>{analysis}</p>
+          {villagerReaction && (
+            <p style={{
+              fontSize: '18px',
+              fontFamily: '"MedievalSharp", cursive',
+              marginBottom: '15px',
+              color: '#4B2504',
+              fontStyle: 'italic',
+              textAlign: 'center',
+              padding: '10px',
+              borderBottom: '1px solid #8B4513'
+            }}>
+              {villagerReaction}
+            </p>
+          )}
+          <p style={{ 
+            fontWeight: 'bold', 
+            fontSize: '18px',
+            fontFamily: '"Caudex", serif'
+          }}>Evaluation:</p>
+          <p style={{ 
+            fontSize: '16px',
+            fontFamily: '"Caudex", serif',
+            lineHeight: '1.5'
+          }}>{analysis}</p>
           <button 
             onClick={onDismissAnalysis}
             style={{
