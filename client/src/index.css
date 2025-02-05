@@ -11,4 +11,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; /* Add this */
+}
+
+/* Add styles for the dialogue container */
+#dialogue-container {
+  position: fixed;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 60%;
+  max-width: 800px;
+  min-width: 300px;
 }
