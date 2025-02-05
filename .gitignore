@@ -128,3 +128,33 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+# Ignore user-specific files
+Library/
+Logs/
+Temp/
+UserSettings/
+Packages/manifest.json
+Packages/packages-lock.json
+
+# Ignore build files
+Build/
+Builds/
+Assets/StreamingAssets/
+
+# Ignore generated Unity files
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.pidb
+*.booproj
+*.svd
+
+# Ignore IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
