@@ -5,15 +5,15 @@ import DialogueBox from './components/DialogueBox.jsx';
 
 function App() {
   // Hold dialogue state in React
-  const [dialogue, setDialogue] = useState({ visible: false, question: '' });
+  const [dialogue, setDialogue] = useState({ visible: false, question: '', npcType: '' });
   const [showAnswerInput, setShowAnswerInput] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [evaluationLoading, setEvaluationLoading] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
 
   // Callback to show dialogue – called from MainScene
-  const onShowDialogue = useCallback((question) => {
-    setDialogue({ visible: true, question });
+  const onShowDialogue = useCallback((question, npcType) => {
+    setDialogue({ visible: true, question, npcType });
     setShowAnswerInput(false);
     setAnalysis("");
     setUserAnswer("");

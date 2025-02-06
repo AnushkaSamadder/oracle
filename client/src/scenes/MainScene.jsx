@@ -196,17 +196,32 @@ export default class MainScene extends Phaser.Scene {
     
     this.lastNpcKey = npcKey;
     
-    const idleKey = `${npcKey}-idle/frame_0_delay-0.1s`;
-    const walkKey = `${npcKey}-walk/frame_00_delay-0.1s`;
+    // Try both padded and unpadded frame keys for initial sprite
+    const idleUnpadded = `${npcKey}-idle/frame_0_delay-0.1s`;
+    const idlePadded = `${npcKey}-idle/frame_00_delay-0.1s`;
+    const walkUnpadded = `${npcKey}-walk/frame_0_delay-0.1s`;
+    const walkPadded = `${npcKey}-walk/frame_00_delay-0.1s`;
     
-    if (!this.textures.exists(idleKey) || !this.textures.exists(walkKey)) {
-      console.error(`Required textures not found for ${npcKey}. Idle: ${idleKey}, Walk: ${walkKey}`);
+    // Use whichever frame exists
+    let initialFrame;
+    if (this.textures.exists(idleUnpadded)) {
+      initialFrame = idleUnpadded;
+    } else if (this.textures.exists(idlePadded)) {
+      initialFrame = idlePadded;
+    } else if (this.textures.exists(walkUnpadded)) {
+      initialFrame = walkUnpadded;
+    } else if (this.textures.exists(walkPadded)) {
+      initialFrame = walkPadded;
+    }
+    
+    if (!initialFrame) {
+      console.error(`Required textures not found for ${npcKey}.`);
       // Retry after a short delay.
       this.time.delayedCall(1000, () => this.spawnNextNPC());
       return;
     }
     
-    this.npc = this.add.sprite(2200, 800, idleKey);
+    this.npc = this.add.sprite(2200, 800, initialFrame);
     this.npc.setScale(4.5);
     this.npc.setDepth(2);
     this.npc.setAlpha(0);
@@ -256,7 +271,7 @@ export default class MainScene extends Phaser.Scene {
               });
               question = this.defaultQuestions[npcKey]; // Use default while loading
             }
-            window.dialogueCallbacks.onShowDialogue(question);
+            window.dialogueCallbacks.onShowDialogue(question, npcKey);
           }
           this.onPlayerAnswer = (answer) => {
             if (window.dialogueCallbacks?.onHideDialogue) {

@@ -63,15 +63,17 @@ app.post('/evaluate', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `You are evaluating medieval-style answers to modern tech questions. Provide a concise evaluation with:
+          content: `You are evaluating medieval-style answers to questions. Provide a concise evaluation with:
 1. A score (0-100)
 2. Brief feedback (2-3 sentences max)
 3. A specific suggestion for improvement
 
+The answers can be funny and humorous or outlandish (unethical as well, do not reduce grade because of this but it must relate to the question.)
+
 Format your response exactly like this example:
-Score: 85
-Feedback: Strong use of medieval language and creative metaphors. The advice about "cooling the crystal with winter's breath" cleverly addresses computer overheating.
-Suggestion: Consider adding more thee/thou pronouns and medieval expressions like "verily" or "forsooth".
+Tally(this is score): 85
+Judgment(this is feedback): Strong use of medieval language and creative metaphors. The advice about "slay thy lord" cleverly addresses taking over as a lord.
+Plea (this is suggesstion): Consider adding more thee/thou pronouns and medieval expressions like "verily" or "forsooth".
 
 IMPORTANT: Your entire response must follow this exact format. Do not add any other text.`
         },

@@ -16,7 +16,7 @@ const DialogueBox = ({
   // Compute villager reaction based on evaluation score when analysis is available
   let villagerReaction = null;
   if (analysis && !evaluationLoading) {
-    const scoreMatch = analysis.match(/Score:\s*(\d+)/);
+    const scoreMatch = analysis.match(/Tally:\s*(\d+)/);
     if (scoreMatch) {
       const score = parseInt(scoreMatch[1], 10);
       if (score >= 75) {
@@ -28,6 +28,15 @@ const DialogueBox = ({
       }
     }
   }
+
+  const portraitStyle = {
+    width: '96px',
+    height: '96px',
+    objectFit: 'cover',
+    border: '3px solid #8B4513',
+    marginRight: '20px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -57,7 +66,7 @@ const DialogueBox = ({
       fontFamily: '"IM Fell English", Georgia, serif',
       color: '#4B2504'
     }}>
-      {/* Question Box */}
+      {/* Question Box with Portrait */}
       <div style={{
         width: '100%',
         textAlign: 'center',
@@ -66,31 +75,25 @@ const DialogueBox = ({
         marginBottom: '20px'
       }}>
         <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '10px',
-          backgroundImage: 'radial-gradient(circle, #8B4513 1px, transparent 1px)',
-          backgroundSize: '10px 10px'
-        }} />
-        <p style={{ 
-          margin: '10px 0',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          lineHeight: '1.4',
-          textShadow: '1px 1px 0 rgba(255,255,255,0.5)',
-          fontFamily: '"MedievalSharp", cursive'
-        }}>{dialogue.question}</p>
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '10px',
-          backgroundImage: 'radial-gradient(circle, #8B4513 1px, transparent 1px)',
-          backgroundSize: '10px 10px'
-        }} />
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '15px'
+        }}>
+          <img 
+            src={`/assets/npcPortraits/${dialogue.npcType}.png`}
+            alt={dialogue.npcType}
+            style={portraitStyle}
+          />
+          <p style={{ 
+            margin: '10px 0',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            lineHeight: '1.4',
+            textShadow: '1px 1px 0 rgba(255,255,255,0.5)',
+            fontFamily: '"MedievalSharp", cursive'
+          }}>{dialogue.question}</p>
+        </div>
       </div>
 
       {/* Evaluation Loading / Analysis Display */}
@@ -100,7 +103,7 @@ const DialogueBox = ({
           fontFamily: '"Caudex", serif',
           color: '#4B2504'
         }}>
-          Evaluating your answer...
+          Evaluating thy counsel...
         </div>
       ) : analysis ? (
         <div style={{
@@ -115,12 +118,12 @@ const DialogueBox = ({
             <p style={{
               fontSize: '18px', 
               fontFamily: '"MedievalSharp", cursive',
-              marginBottom: '15px',
               color: '#4B2504',
               fontStyle: 'italic',
-              textAlign: 'center',
-              padding: '10px',
-              borderBottom: '1px solid #8B4513'
+              margin: '0 0 15px 0',
+              padding: '0 0 15px 0',
+              borderBottom: '1px solid #8B4513',
+              textAlign: 'center'
             }}>
               {villagerReaction}
             </p>
