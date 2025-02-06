@@ -7,7 +7,8 @@ const DialogueBox = ({
   onSubmitAnswer,
   analysis,
   evaluationLoading,
-  onDismissAnalysis
+  onDismissAnalysis,
+  playerTitle
 }) => {
   const [answer, setAnswer] = useState('');
 
@@ -66,13 +67,35 @@ const DialogueBox = ({
       fontFamily: '"IM Fell English", Georgia, serif',
       color: '#4B2504'
     }}>
+      {/* Title Display */}
+      {playerTitle && (
+        <div style={{
+          position: 'absolute',
+          top: '-30px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#8B4513',
+          color: '#f4d03f',
+          padding: '5px 15px',
+          borderRadius: '15px',
+          fontFamily: '"MedievalSharp", cursive',
+          fontSize: '14px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          border: '1px solid #5C2C0C',
+          whiteSpace: 'nowrap'
+        }}>
+          {playerTitle}
+        </div>
+      )}
+
       {/* Question Box with Portrait */}
       <div style={{
         width: '100%',
         textAlign: 'center',
         position: 'relative',
         padding: '20px 40px',
-        marginBottom: '20px'
+        marginBottom: '20px',
+        marginTop: playerTitle ? '10px' : '0' // Add margin if title is present
       }}>
         <div style={{
           display: 'flex',

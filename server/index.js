@@ -1,11 +1,37 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { MongoClient } = require('mongodb');
+// Require the OpenAI client
+const OpenAI = require('openai');
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Require the OpenAI client
-const OpenAI = require('openai');
+// MongoDB setup
+const uri = process.env.MONGODB_URI.replace('<db_password>', process.env.DB_PASSWORD);
+const client = new MongoClient(uri);
+
+async function connectToMongo() {
+  try {
+    await client.connect();
+    console.log('Connected to MongoDB');
+    return client.db(process.env.DB_NAME);
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  }
+}
+
+let db;
+connectToMongo().then(database => {
+  db = database;
+});
+
+// Initialize OpenAI client with Nebius configuration
+const openai = new OpenAI({
+  baseURL: 'https://api.studio.nebius.ai/v1/',
+  apiKey: process.env.NEBIUS_API_KEY,
+});
 
 // Middleware
 app.use(cors());
@@ -34,6 +60,10 @@ app.post('/sms', (req, res) => {
 app.post('/evaluate', async (req, res) => {
   try {
     const { question, answer } = req.body;
+    const visitorId = req.headers['x-visitor-id'] || 'unknown';
+    
+    // Log visitor interaction (for now)
+    console.log(`Visitor ${visitorId} submitted answer:`, { question, answer });
     
     // Input validation
     if (!question?.trim() || !answer?.trim()) {
@@ -47,12 +77,6 @@ app.post('/evaluate', async (req, res) => {
     if (!process.env.NEBIUS_API_KEY) {
       throw new Error('NEBIUS_API_KEY environment variable is not set');
     }
-
-    // Initialize OpenAI client with Nebius configuration
-    const client = new OpenAI({
-      baseURL: 'https://api.studio.nebius.ai/v1/',
-      apiKey: process.env.NEBIUS_API_KEY,
-    });
 
     // Build the evaluation payload
     const payload = {
@@ -85,15 +109,44 @@ IMPORTANT: Your entire response must follow this exact format. Do not add any ot
     };
 
     // Make the API call
-    const responseFromAI = await client.chat.completions.create(payload);
+    const responseFromAI = await openai.chat.completions.create(payload);
+    const feedback = responseFromAI.choices[0]?.message?.content;
     
-    // Extract and structure the response
-    const evaluation = {
-      feedback: responseFromAI.choices[0]?.message?.content,
+    // Update player stats if we have a valid visitorId
+    if (visitorId !== 'unknown') {
+      const players = db.collection('players');
+      const scoreMatch = feedback.match(/Tally:\s*(\d+)/);
+      const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
+      
+      const updateData = {
+        $inc: { answerCount: 1 },
+        $set: { lastVisit: new Date() }
+      };
+      
+      // Count good answers (score >= 65)
+      if (score >= 65) {
+        updateData.$inc.goodAnswerCount = 1;
+      }
+      
+      // Check for title upgrades
+      const player = await players.findOne({ visitorId });
+      if (player) {
+        if (player.goodAnswerCount >= 25 && !player.unlockedTitles.includes("Royal Counselor")) {
+          updateData.$push = { unlockedTitles: "Royal Counselor" };
+          updateData.$set.currentTitle = "Royal Counselor";
+        } else if (player.goodAnswerCount >= 10 && !player.unlockedTitles.includes("Village Sage")) {
+          updateData.$push = { unlockedTitles: "Village Sage" };
+          updateData.$set.currentTitle = "Village Sage";
+        }
+        
+        await players.updateOne({ visitorId }, updateData);
+      }
+    }
+    
+    return res.json({
+      feedback,
       status: 'success'
-    };
-
-    return res.json(evaluation);
+    });
   } catch (error) {
     console.error("Error in /evaluate endpoint:", error);
     
@@ -118,12 +171,6 @@ app.get('/generate-questions', async (req, res) => {
     }
 
     const count = parseInt(req.query.count) || 1; // Number of questions to generate
-
-    // Initialize OpenAI client with Nebius configuration
-    const client = new OpenAI({
-      baseURL: 'https://api.studio.nebius.ai/v1/',
-      apiKey: process.env.NEBIUS_API_KEY,
-    });
     
     const payload = {
       model: "meta-llama/Llama-3.3-70B-Instruct",
@@ -141,7 +188,7 @@ app.get('/generate-questions', async (req, res) => {
       ]
     };
 
-    const response = await client.chat.completions.create(payload);
+    const response = await openai.chat.completions.create(payload);
     
     // Parse and validate the response
     let questions = [];
@@ -236,6 +283,34 @@ app.get('/generate-questions', async (req, res) => {
       message: error.message,
       status: 'error'
     });
+  }
+});
+
+// New endpoint to get or create player profile
+app.get('/player/:visitorId', async (req, res) => {
+  try {
+    const { visitorId } = req.params;
+    const players = db.collection('players');
+    
+    let player = await players.findOne({ visitorId });
+    
+    if (!player) {
+      player = {
+        visitorId,
+        answerCount: 0,
+        goodAnswerCount: 0,
+        currentTitle: "Novice Advisor",
+        unlockedTitles: ["Novice Advisor"],
+        lastVisit: new Date(),
+        createdAt: new Date()
+      };
+      await players.insertOne(player);
+    }
+    
+    return res.json(player);
+  } catch (error) {
+    console.error('Error in player endpoint:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
