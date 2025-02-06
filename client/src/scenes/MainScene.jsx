@@ -1,4 +1,3 @@
-
 export default class MainScene extends Phaser.Scene {
   constructor() {
     super('MainScene');
@@ -25,7 +24,6 @@ export default class MainScene extends Phaser.Scene {
     this.lastNpcKey = null;
     this.onPlayerAnswer = null;
   }
-
 
   create() {
     const width = this.game.config.width;
@@ -55,17 +53,39 @@ export default class MainScene extends Phaser.Scene {
     ];
     this.npcTypes = npcTypes;
     
+    // Dynamic configuration for NPC frame counts (must match Preloader.js)
+    const npcFrameCounts = {
+      gatherer: { idle: 7, walk: 11 },
+      graveDigger: { idle: 7, walk: 11 },
+      hunter: { idle: 7, walk: 9 },
+      king: { idle: 8, walk: 5 },
+      knight: { idle: 8, walk: 7 },
+      knightHorse: { idle: 9, walk: 11 },
+      lumberjack: { idle: 7, walk: 8 },
+      merchant: { idle: 7, walk: 12 },
+      miner: { idle: 7, walk: 6 },
+      nun: { idle: 6, walk: 5 },
+      wanderer: { idle: 7, walk: 12 }
+    };
+
     // Reset loadedNpcTypes
     this.loadedNpcTypes = [];
     
     // Create animations for each NPC type.
     npcTypes.forEach((npcKey) => {
-      // Build walk frames array by checking if each frame texture exists.
+      // Build walk frames array using dynamic frame counts.
       let walkFrames = [];
-      for (let i = 0; i <= 10; i++) {
-        const frameKey = `${npcKey}-walk/frame_${i.toString().padStart(2, '0')}_delay-0.1s`;
-        if (this.textures.exists(frameKey)) {
-          walkFrames.push({ key: frameKey });
+      const walkFrameCount = npcFrameCounts[npcKey].walk;
+      for (let i = 0; i < walkFrameCount; i++) {
+        // Try both padded and unpadded frame keys
+        const paddedKey = `${npcKey}-walk/frame_${i.toString().padStart(2, '0')}_delay-0.1s`;
+        const unpaddedKey = `${npcKey}-walk/frame_${i}_delay-0.1s`;
+        
+        // Use whichever frame exists
+        if (this.textures.exists(paddedKey)) {
+          walkFrames.push({ key: paddedKey });
+        } else if (this.textures.exists(unpaddedKey)) {
+          walkFrames.push({ key: unpaddedKey });
         }
       }
       let walkFallbackUsed = false;
@@ -83,12 +103,19 @@ export default class MainScene extends Phaser.Scene {
         });
       }
       
-      // Build idle frames array by checking if each frame texture exists.
+      // Build idle frames array using dynamic frame counts.
       let idleFrames = [];
-      for (let i = 0; i <= 6; i++) {
-        const frameKey = `${npcKey}-idle/frame_${i}_delay-0.1s`;
-        if (this.textures.exists(frameKey)) {
-          idleFrames.push({ key: frameKey });
+      const idleFrameCount = npcFrameCounts[npcKey].idle;
+      for (let i = 0; i < idleFrameCount; i++) {
+        // Try both padded and unpadded frame keys
+        const paddedKey = `${npcKey}-idle/frame_${i.toString().padStart(2, '0')}_delay-0.1s`;
+        const unpaddedKey = `${npcKey}-idle/frame_${i}_delay-0.1s`;
+        
+        // Use whichever frame exists
+        if (this.textures.exists(paddedKey)) {
+          idleFrames.push({ key: paddedKey });
+        } else if (this.textures.exists(unpaddedKey)) {
+          idleFrames.push({ key: unpaddedKey });
         }
       }
       let idleFallbackUsed = false;
@@ -106,7 +133,7 @@ export default class MainScene extends Phaser.Scene {
         });
       }
       
-      // Only add npcKey to loadedNpcTypes if BOTH idle and walk animations loaded real frames.
+      // Only add npcKey to loadedNpcTypes if both idle and walk animations loaded correct frames.
       if (!walkFallbackUsed && !idleFallbackUsed) {
         this.loadedNpcTypes.push(npcKey);
         console.log(`NPC "${npcKey}" loaded successfully.`);

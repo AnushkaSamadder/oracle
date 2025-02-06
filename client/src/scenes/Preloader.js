@@ -46,7 +46,6 @@ export default class Preloader extends Phaser.Scene {
       }
       console.log('All assets loaded successfully');
     });
-  
 
     this.load.on('loaderror', (file) => {
       console.error('Error loading asset:', file.key, file.src);
@@ -64,26 +63,56 @@ export default class Preloader extends Phaser.Scene {
       'knightHorse', 'lumberjack', 'merchant', 'miner', 'nun', 'wanderer'
     ];
 
+    // Dynamic configuration for NPC frame counts
+    const npcFrameCounts = {
+      gatherer: { idle: 7, walk: 11 },
+      graveDigger: { idle: 7, walk: 11 },
+      hunter: { idle: 7, walk: 9 },
+      king: { idle: 8, walk: 5 },
+      knight: { idle: 8, walk: 7 },
+      knightHorse: { idle: 9, walk: 11 },
+      lumberjack: { idle: 7, walk: 8 },
+      merchant: { idle: 7, walk: 12 },
+      miner: { idle: 7, walk: 6 },
+      nun: { idle: 6, walk: 5 },
+      wanderer: { idle: 7, walk: 12 }
+    };
+    
     npcTypes.forEach((npc) => {
-      // Load idle frames
-      // Files: frame_0_delay-0.1s.png to frame_6_delay-0.1s.png
-      for (let i = 0; i <= 6; i++) {
+      // Load idle frames using dynamic frame counts
+      const idleCount = npcFrameCounts[npc].idle;
+      for (let i = 0; i < idleCount; i++) {
+        // Try both naming patterns for idle frames
         const idleFrame = `frame_${i}_delay-0.1s.png`;
-        // The texture key matches the file path structure
+        const paddedIdleFrame = `frame_${i.toString().padStart(2, '0')}_delay-0.1s.png`;
+        
+        // Load both variants - Phaser will use whichever exists
         this.load.image(
           `${npc}-idle/frame_${i}_delay-0.1s`,
           `/assets/npcs/${npc}/${npc}-idle/${idleFrame}`
         );
+        this.load.image(
+          `${npc}-idle/frame_${i.toString().padStart(2, '0')}_delay-0.1s`,
+          `/assets/npcs/${npc}/${npc}-idle/${paddedIdleFrame}`
+        );
       }
-      // Load walk frames
-      // Files: frame_00_delay-0.1s.png to frame_10_delay-0.1s.png
-      for (let i = 0; i <= 10; i++) {
-        const frameNum = i.toString().padStart(2, '0'); // "00", "01", etc.
+      
+      // Load walk frames using dynamic frame counts
+      const walkCount = npcFrameCounts[npc].walk;
+      for (let i = 0; i < walkCount; i++) {
+        // Try both naming patterns for walk frames
+        const frameNum = i.toString().padStart(2, '0');
         const walkFrame = `frame_${frameNum}_delay-0.1s.png`;
-        // The texture key matches the file path structure
+        const unpaddedWalkFrame = `frame_${i}_delay-0.1s.png`;
+        
+        // Load both variants - Phaser will use whichever exists
         this.load.image(
           `${npc}-walk/frame_${frameNum}_delay-0.1s`,
           `/assets/npcs/${npc}/${npc}-walk/${walkFrame}`
+        );
+        this.load.image(
+          `${npc}-walk/frame_${i}_delay-0.1s`,
+          `/assets/npcs/${npc}/${npc}-walk/${unpaddedWalkFrame}`
         );
       }
     });
