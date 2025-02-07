@@ -16,6 +16,48 @@ export default class MainScene extends Phaser.Scene {
       nun: "How doth one purify a virus-infected device?",
       wanderer: "Which path leads through the maze of pop-up windows?"
     };
+
+    // Browser-specific questions
+    this.browserSpecificQuestions = {
+      "chrome": {
+        npcType: "swiftFalcon",
+        question: "Mine messenger falcon 'google the 1st' moves swift as lightning, yet devours the kingdom's grain stores! How might one tame its appetite?",
+      },
+      "firefox": {
+        npcType: "flameFox",
+        question: "The mystical fire fox guards my scrolls, but why doth it slumber more each moon?",
+      },
+      "safari": {
+        npcType: "mysticalLion",
+        question: "The crystal lion's pride grows restless with each passing season. What magic keeps it from wandering?",
+      }
+    };
+    
+    // Visit-based NPCs and their questions
+    this.visitBasedNPCs = {
+      "wanderingScholar": {
+        minVisits: 5,
+        questions: [
+          "How doth one organize countless scrolls within a single tome?",
+          "Why do mine enchanted windows multiply like rabbits?",
+        ]
+      },
+      "portalMaster": {
+        minVisits: 10,
+        questions: [
+          "The void between realms fills with forgotten memories - how to cleanse it?",
+          "Mine portal remembers too many merchant visits, causing strange visions.",
+        ]
+      },
+      "timeKeeper": {
+        minVisits: 20,
+        questions: [
+          "The sands of time leave tracks in mine crystal - how to sweep them away?",
+          "Past visions cloud mine seeing stone - what ritual might clear them?",
+        ]
+      }
+    };
+
     // Map to store dynamically loaded questions (or fallback default)
     this.npcDialogues = { ...this.defaultQuestions };
     this.npcTypes = []; // To be set in create()
@@ -164,7 +206,6 @@ export default class MainScene extends Phaser.Scene {
 
   // New method to fetch dynamic questions from the backend.
   async loadQuestions() {
-    // Request more questions than the number of NPCs for a good pool.
     const requestCount = this.npcTypes.length * 2;
     const url = `http://localhost:5000/generate-questions?count=${requestCount}`;
     try {
@@ -174,15 +215,47 @@ export default class MainScene extends Phaser.Scene {
       }
       const data = await response.json();
       if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
-        // Store the questions in a pool for use—later each spawned NPC will take a random question.
         this.questionPool = [...data.questions];
         console.log("Dynamic question pool loaded:", this.questionPool);
       } else {
         throw new Error("No valid questions returned from API");
       }
+
+      // Fetch player profile to determine rare NPCs
+      const visitorId = window.visitorId;
+      if (!visitorId) {
+        console.warn("No visitor ID available");
+        return;
+      }
+
+      const profileResponse = await fetch(`http://localhost:5000/player/${visitorId}`);
+      const profile = await profileResponse.json();
+      const { browser, visitCount } = profile;
+
+      // Add browser-specific question at the beginning
+      if (this.browserSpecificQuestions[browser]) {
+        const browserNPC = this.browserSpecificQuestions[browser];
+        this.questionPool.unshift(browserNPC.question);
+        this.npcDialogues[browserNPC.npcType] = browserNPC.question;
+        // Add the NPC type to available types if not already present
+        if (!this.npcTypes.includes(browserNPC.npcType)) {
+          this.npcTypes.push(browserNPC.npcType);
+        }
+      }
+
+      // Add visit-based questions
+      for (const npcKey in this.visitBasedNPCs) {
+        if (visitCount >= this.visitBasedNPCs[npcKey].minVisits) {
+          this.questionPool.push(...this.visitBasedNPCs[npcKey].questions);
+          this.npcDialogues[npcKey] = this.visitBasedNPCs[npcKey].questions[0];
+          // Add the NPC type if not already present
+          if (!this.npcTypes.includes(npcKey)) {
+            this.npcTypes.push(npcKey);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error fetching questions:", error);
-      // Fallback: use default questions as pool.
       this.questionPool = Object.values(this.defaultQuestions);
     }
   }
@@ -252,25 +325,18 @@ export default class MainScene extends Phaser.Scene {
         onComplete: () => {
           this.npc.play(`${npcKey}-idle`);
           if (window.dialogueCallbacks?.onShowDialogue) {
-            // Use a random question from the pool and remove it.
             let question;
+            
+            // Prioritize question pool, then default questions
             if (this.questionPool && this.questionPool.length > 0) {
-              // Get random index
-              const randomIndex = Math.floor(Math.random() * this.questionPool.length);
-              // Remove and get the question
-              question = this.questionPool.splice(randomIndex, 1)[0];
-              // Update the NPC's dialogue
+              question = this.questionPool.shift();
               this.npcDialogues[npcKey] = question;
             } else {
-              // If pool is empty, fetch new questions
-              console.log("Question pool empty, fetching new questions...");
-              this.loadQuestions().catch(err => {
-                console.error("Error reloading questions:", err);
-                // Use default question as fallback
-                question = this.defaultQuestions[npcKey];
-              });
-              question = this.defaultQuestions[npcKey]; // Use default while loading
+              // Fallback to default question if pool is empty
+              question = this.defaultQuestions[npcKey] || "No question available";
+              console.log("Question pool empty, using default question");
             }
+            
             window.dialogueCallbacks.onShowDialogue(question, npcKey);
           }
           this.onPlayerAnswer = (answer) => {

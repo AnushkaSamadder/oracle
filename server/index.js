@@ -8,8 +8,13 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // MongoDB setup
-const uri = process.env.MONGODB_URI.replace('<db_password>', process.env.DB_PASSWORD);
-const client = new MongoClient(uri);
+const uri = process.env.MONGODB_URI;
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  ssl: true,
+  tlsAllowInvalidCertificates: true 
+});
 
 async function connectToMongo() {
   try {
@@ -290,6 +295,7 @@ app.get('/generate-questions', async (req, res) => {
 app.get('/player/:visitorId', async (req, res) => {
   try {
     const { visitorId } = req.params;
+    const userAgent = req.headers['user-agent'];
     const players = db.collection('players');
     
     let player = await players.findOne({ visitorId });
@@ -297,6 +303,7 @@ app.get('/player/:visitorId', async (req, res) => {
     if (!player) {
       player = {
         visitorId,
+        visitCount: 0,
         answerCount: 0,
         goodAnswerCount: 0,
         currentTitle: "Novice Advisor",
@@ -305,9 +312,22 @@ app.get('/player/:visitorId', async (req, res) => {
         createdAt: new Date()
       };
       await players.insertOne(player);
+    } else {
+      player.visitCount += 1;
+      await players.updateOne({ visitorId }, { $set: { visitCount: player.visitCount, lastVisit: new Date() } });
     }
-    
-    return res.json(player);
+
+    // Detect browser
+    let browser = "unknown";
+    if (userAgent.includes("Chrome")) {
+      browser = "chrome";
+    } else if (userAgent.includes("Firefox")) {
+      browser = "firefox";
+    } else if (userAgent.includes("Safari")) {
+      browser = "safari";
+    }
+
+    return res.json({ ...player, browser });
   } catch (error) {
     console.error('Error in player endpoint:', error);
     return res.status(500).json({ error: 'Internal Server Error' });

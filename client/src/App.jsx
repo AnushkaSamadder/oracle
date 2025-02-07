@@ -14,6 +14,45 @@ function App() {
   const [newTitle, setNewTitle] = useState(null);
   const [playerProfile, setPlayerProfile] = useState(null);
 
+  const browserSpecificQuestions = {
+    "chrome": {
+      npcType: "swiftFalcon",
+      question: "Mine messenger falcon moves swift as lightning, yet devours the kingdom's grain stores! How might one tame its appetite?", // Chrome memory usage
+    },
+    "firefox": {
+      npcType: "flameFox",
+      question: "The mystical fire fox guards my scrolls, but why doth it slumber more each moon?",
+    },
+    "safari": {
+      npcType: "mysticalLion",
+      question: "The crystal lion's pride grows restless with each passing season. What magic keeps it from wandering?",
+    }
+  };
+  
+  const visitBasedNPCs = {
+    "wanderingScholar": {
+      minVisits: 5,
+      questions: [
+        "How doth one organize countless scrolls within a single tome?", // browser tabs
+        "Why do mine enchanted windows multiply like rabbits?",
+      ]
+    },
+    "portalMaster": {
+      minVisits: 10,
+      questions: [
+        "The void between realms fills with forgotten memories - how to cleanse it?", // cache
+        "Mine portal remembers too many merchant visits, causing strange visions.",
+      ]
+    },
+    "timeKeeper": {
+      minVisits: 20,
+      questions: [
+        "The sands of time leave tracks in mine crystal - how to sweep them away?", // history
+        "Past visions cloud mine seeing stone - what ritual might clear them?",
+      ]
+    }
+  };
+
   // Initialize FingerprintJS when the app loads
   useEffect(() => {
     const initFingerprintJS = async () => {
@@ -22,6 +61,8 @@ function App() {
         const result = await fp.get();
         setVisitorId(result.visitorId);
         console.log('Visitor ID:', result.visitorId);
+        // Make visitorId available globally for MainScene
+        window.visitorId = result.visitorId;
       } catch (error) {
         console.error('Error initializing FingerprintJS:', error);
       }
