@@ -2,10 +2,30 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
+// Require the Twilio client library for SMS functionality
+let twilio;
+try {
+  twilio = require('twilio');
+} catch (error) {
+  console.warn('Warning: Twilio package not available. SMS features will be disabled.');
+}
 // Require the OpenAI client
 const OpenAI = require('openai');
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Validate required environment variables
+if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+  console.warn('Warning: TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables are required for SMS features');
+}
+
+// Initialize Twilio client if credentials are available
+const twilioClient = (twilio && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) 
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
+
+// Add verified number constant
+const VERIFIED_PHONE_NUMBER = '+919342377230';
 
 // MongoDB setup
 const uri = process.env.MONGODB_URI;
@@ -41,6 +61,8 @@ const openai = new OpenAI({
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Added middleware to properly parse Twilio’s URL-encoded POST data
+app.use(express.urlencoded({ extended: false }));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -56,9 +78,75 @@ app.get('/', (req, res) => {
   res.json({ status: 'Medieval Shop server is running!' });
 });
 
-// Placeholder route for future Twilio integration
-app.post('/sms', (req, res) => {
-  res.json({ status: 'SMS endpoint received' });
+// Twilio SMS endpoint – handles incoming SMS commands and replies with medieval wisdom.
+app.post('/sms', async (req, res) => {
+  try {
+    const smsBody = req.body.Body ? req.body.Body.trim().toUpperCase() : "";
+    const fromNumber = req.body.From;
+    const MessagingResponse = twilio.twiml.MessagingResponse;
+    const twiml = new MessagingResponse();
+
+    if (!fromNumber) {
+      twiml.message("Alas, we cannot discern thy identity. Please send thy message again.");
+    } else {
+      const players = db.collection('players');
+      let player = await players.findOne({ visitorId: fromNumber });
+      if (!player) {
+        player = {
+          visitorId: fromNumber,
+          visitCount: 1,
+          answerCount: 0,
+          goodAnswerCount: 0,
+          currentTitle: "Novice Advisor",
+          unlockedTitles: ["Novice Advisor"],
+          lastVisit: new Date(),
+          createdAt: new Date()
+        };
+        await players.insertOne(player);
+      } else {
+        await players.updateOne(
+          { visitorId: fromNumber },
+          { $inc: { visitCount: 1 }, $set: { lastVisit: new Date() } }
+        );
+      }
+
+      if (smsBody === "WISDOM") {
+        const wisdomResponses = [
+          "Hark! Wilt thou solve this riddle: 'I speak without a tongue and hear without ears. What am I?'",
+          "Thou art as daft as a hammered cudgel, yet wise in thy folly.",
+          "Prithee, heed this riddle: 'I have towns but no houses, I have mountains but no trees, I have water but no fish. What am I?'",
+          "Thou art so full of hot air, even the wind doth rival thee in bluster!",
+          "Behold! A riddle: 'What is seen in the middle of March and April that can’t be seen at the beginning or end of either?'",
+          "Thy wit doth resemble a winter frost—cold and lacking in bloom."
+        ];
+        const randomIndex = Math.floor(Math.random() * wisdomResponses.length);
+        twiml.message(wisdomResponses[randomIndex]);
+      } else if (smsBody === "SCROLL") {
+        let summaryMessage = "";
+        let score = 0;
+        if (player.answerCount > 0) {
+          score = Math.round((player.goodAnswerCount / player.answerCount) * 10);
+        }
+        if (player.answerCount === 0) {
+          summaryMessage = "Thy journey hath just begun. No wisdom yet recorded, noble traveler.";
+        } else if (score >= 8) {
+          summaryMessage = `Thy score: ${score}/10. The peasants sing thy praises! Visit anew, noble wordsmith.`;
+        } else if (score >= 5) {
+          summaryMessage = `Thy score: ${score}/10. Thy counsel may yet ascend; practice thy art, brave soul.`;
+        } else {
+          summaryMessage = `Thy score: ${score}/10. Alas, thy wisdom is as murky as a bog. Redeem thyself and return.`;
+        }
+        twiml.message(summaryMessage);
+      } else {
+        twiml.message("Greetings, noble traveler! Text 'WISDOM' for a riddle or scathing insult, or 'SCROLL' for thy session summary.");
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    res.end(twiml.toString());
+  } catch (error) {
+    console.error("Error handling SMS webhook:", error);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 // Evaluation endpoint for medieval answer grading using Nebius AI
@@ -145,6 +233,36 @@ IMPORTANT: Your entire response must follow this exact format. Do not add any ot
         }
         
         await players.updateOne({ visitorId }, updateData);
+
+        // After updating, check if we should send an SMS update (every 5 questions)
+        const newAnswerCount = (player.answerCount || 0) + 1;
+        if (newAnswerCount % 5 === 0 && twilioClient) {
+          try {
+            const updatedPlayer = await players.findOne({ visitorId });
+            const totalScore = Math.round((updatedPlayer.goodAnswerCount / updatedPlayer.answerCount) * 10);
+            let message = `🎭 Milestone Report - Question ${newAnswerCount} 📜\n\n`;
+            message += `Thy current standing:\n`;
+            message += `✨ Title: ${updatedPlayer.currentTitle}\n`;
+            message += `📊 Tally: ${totalScore}/10\n`;
+            message += `🎯 Successful Counsels: ${updatedPlayer.goodAnswerCount}/${updatedPlayer.answerCount}\n\n`;
+            
+            if (totalScore >= 8) {
+              message += "The kingdom prospers under thy sage advice! 👑";
+            } else if (totalScore >= 5) {
+              message += "Thy wisdom grows with each passing moon. 🌙";
+            } else {
+              message += "Keep studying the ancient scrolls, young advisor. 📚";
+            }
+
+            await twilioClient.messages.create({
+              body: message,
+              to: VERIFIED_PHONE_NUMBER,
+              from: '+13373585199'
+            });
+          } catch (smsError) {
+            console.error('Error sending milestone SMS:', smsError);
+          }
+        }
       }
     }
     
