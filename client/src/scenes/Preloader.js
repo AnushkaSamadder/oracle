@@ -116,6 +116,16 @@ export default class Preloader extends Phaser.Scene {
         );
       }
     });
+
+    // Load audio assets
+    this.load.audio('background', '/assets/audio/music/background.mp3');
+    this.load.audio('coin', '/assets/audio/soundFx/coin.mp3');
+    this.load.audio('quill', '/assets/audio/soundFx/quill.mp3');
+    
+    // Load NPC-specific sounds
+    npcTypes.forEach(npc => {
+      this.load.audio(`${npc}-sound`, `/assets/audio/soundFx/${npc}.mp3`);
+    });
   }
 
   create() {

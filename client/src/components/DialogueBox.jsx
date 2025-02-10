@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const DialogueBox = ({
   dialogue,
@@ -11,10 +11,52 @@ const DialogueBox = ({
   playerTitle
 }) => {
   const [answer, setAnswer] = useState('');
+  const quillSoundRef = useRef(null);
+
+  useEffect(() => {
+    quillSoundRef.current = new Audio('/assets/audio/soundFx/quill.mp3');
+    return () => {
+      if (quillSoundRef.current) {
+        quillSoundRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!dialogue.visible && quillSoundRef.current) {
+      quillSoundRef.current.pause();
+      quillSoundRef.current.currentTime = 0;
+    }
+  }, [dialogue.visible]);
+
+  useEffect(() => {
+    if (evaluationLoading && quillSoundRef.current) {
+      quillSoundRef.current.pause();
+      quillSoundRef.current.currentTime = 0;
+    }
+  }, [evaluationLoading]);
+
+  const handleKeyPress = (e) => {
+    if (e.key.length === 1 && quillSoundRef.current) {
+      quillSoundRef.current.pause();
+      quillSoundRef.current.currentTime = 0;
+      quillSoundRef.current.play();
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Stop quill sound if it's playing
+    if (quillSoundRef.current) {
+      quillSoundRef.current.pause();
+      quillSoundRef.current.currentTime = 0;
+    }
+    onSubmitAnswer(answer);
+    setAnswer('');
+  };
 
   if (!dialogue.visible) return null;
 
-  // Compute villager reaction based on evaluation score when analysis is available
   let villagerReaction = null;
   if (analysis && !evaluationLoading) {
     const scoreMatch = analysis.match(/Tally:\s*(\d+)/);
@@ -39,12 +81,6 @@ const DialogueBox = ({
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmitAnswer(answer);
-    setAnswer('');
-  };
-
   return (
     <div id="dialogue-container" style={{
       position: 'fixed',
@@ -67,7 +103,6 @@ const DialogueBox = ({
       fontFamily: '"IM Fell English", Georgia, serif',
       color: '#4B2504'
     }}>
-      {/* Title Display */}
       {playerTitle && (
         <div style={{
           position: 'absolute',
@@ -88,14 +123,13 @@ const DialogueBox = ({
         </div>
       )}
 
-      {/* Question Box with Portrait */}
       <div style={{
         width: '100%',
         textAlign: 'center',
         position: 'relative',
         padding: '20px 40px',
         marginBottom: '20px',
-        marginTop: playerTitle ? '10px' : '0' // Add margin if title is present
+        marginTop: playerTitle ? '10px' : '0'
       }}>
         <div style={{
           display: 'flex',
@@ -119,7 +153,6 @@ const DialogueBox = ({
         </div>
       </div>
 
-      {/* Evaluation Loading / Analysis Display */}
       {evaluationLoading ? (
         <div style={{
           fontSize: '16px',
@@ -184,7 +217,6 @@ const DialogueBox = ({
           </button>
         </div>
       ) : (
-        // Answer Section
         !showAnswerInput ? (
           <button 
             onClick={() => setShowAnswerInput(true)}
@@ -231,6 +263,8 @@ const DialogueBox = ({
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit(e);
+                } else {
+                  handleKeyPress(e);
                 }
               }}
               placeholder="Enter thy counsel..."

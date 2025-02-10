@@ -316,6 +316,10 @@ export default class MainScene extends Phaser.Scene {
       return;
     }
     
+    // Play NPC sound when spawning
+    const npcSound = this.sound.add(`${npcKey}-sound`);
+    npcSound.play();
+    
     this.time.delayedCall(500, () => {
       this.tweens.add({
         targets: this.npc,
@@ -343,6 +347,11 @@ export default class MainScene extends Phaser.Scene {
             if (window.dialogueCallbacks?.onHideDialogue) {
               window.dialogueCallbacks.onHideDialogue();
             }
+            
+            // Play coin sound on completion
+            const coinSound = this.sound.add('coin');
+            coinSound.play();
+            
             this.npc.setFlipX(false);
             this.npc.play(`${npcKey}-walk`);
             this.tweens.add({

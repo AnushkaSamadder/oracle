@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
 import Game from './Game.jsx';
 import DialogueBox from './components/DialogueBox.jsx';
@@ -13,6 +13,8 @@ function App() {
   const [userAnswer, setUserAnswer] = useState("");
   const [newTitle, setNewTitle] = useState(null);
   const [playerProfile, setPlayerProfile] = useState(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const backgroundMusicRef = useRef(null);
 
   const browserSpecificQuestions = {
     "chrome": {
@@ -53,7 +55,6 @@ function App() {
     }
   };
 
-  // Initialize FingerprintJS when the app loads
   useEffect(() => {
     const initFingerprintJS = async () => {
       try {
@@ -61,7 +62,6 @@ function App() {
         const result = await fp.get();
         setVisitorId(result.visitorId);
         console.log('Visitor ID:', result.visitorId);
-        // Make visitorId available globally for MainScene
         window.visitorId = result.visitorId;
       } catch (error) {
         console.error('Error initializing FingerprintJS:', error);
@@ -71,7 +71,6 @@ function App() {
     initFingerprintJS();
   }, []);
 
-  // Fetch player profile when visitorId is available
   useEffect(() => {
     if (visitorId) {
       fetch(`http://localhost:5000/player/${visitorId}`)
@@ -84,7 +83,6 @@ function App() {
     }
   }, [visitorId]);
   
-  // Callback to show dialogue – called from MainScene
   const onShowDialogue = useCallback((question, npcType) => {
     setDialogue({ visible: true, question, npcType });
     setShowAnswerInput(false);
@@ -92,7 +90,6 @@ function App() {
     setUserAnswer("");
   }, []);
 
-  // Callback to hide dialogue – called from MainScene or after answer dismissal
   const onHideDialogue = useCallback(() => {
     setDialogue({ visible: false, question: '' });
     setShowAnswerInput(false);
@@ -100,7 +97,6 @@ function App() {
     setUserAnswer("");
   }, []);
 
-  // Callback when the user submits an answer in the DialogueBox.
   const onSubmitAnswer = useCallback(async (answer) => {
     setEvaluationLoading(true);
     setUserAnswer(answer);
@@ -116,15 +112,13 @@ function App() {
       const data = await res.json();
       setAnalysis(data.feedback || "No feedback available.");
 
-      // Fetch updated player profile after evaluation
       if (visitorId) {
         const profileRes = await fetch(`http://localhost:5000/player/${visitorId}`);
         const newProfile = await profileRes.json();
         
-        // Check if title changed
         if (newProfile.currentTitle !== playerProfile?.currentTitle) {
           setNewTitle(newProfile.currentTitle);
-          setTimeout(() => setNewTitle(null), 3000); // Hide after 3 seconds
+          setTimeout(() => setNewTitle(null), 3000);
         }
         
         setPlayerProfile(newProfile);
@@ -137,8 +131,6 @@ function App() {
     }
   }, [dialogue.question, visitorId, playerProfile]);
 
-  // Callback when the user dismisses the analysis view.
-  // This calls MainScene's onPlayerAnswer to resume the NPC's exit.
   const onDismissAnalysis = useCallback(() => {
     if (window.mainScene && typeof window.mainScene.onPlayerAnswer === 'function') {
       window.mainScene.onPlayerAnswer(userAnswer);
@@ -147,15 +139,104 @@ function App() {
   }, [userAnswer, onHideDialogue]);
 
   useEffect(() => {
-    // Expose these callbacks so that Phaser’s MainScene can call them.
     window.dialogueCallbacks = { onShowDialogue, onHideDialogue };
     return () => {
       window.dialogueCallbacks = null;
     };
   }, [onShowDialogue, onHideDialogue]);
 
+  useEffect(() => {
+    try {
+      backgroundMusicRef.current = new Audio('/assets/audio/music/background.mp3');
+      backgroundMusicRef.current.loop = true;
+      
+      // Add error handling for audio loading
+      backgroundMusicRef.current.addEventListener('error', (e) => {
+        console.error('Error loading background music:', e);
+      });
+
+      // Add successful load handler and autoplay
+      backgroundMusicRef.current.addEventListener('canplaythrough', () => {
+        console.log('Background music loaded successfully');
+        // Attempt to autoplay
+        const playPromise = backgroundMusicRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsMusicPlaying(true);
+            })
+            .catch(error => {
+              console.error("Autoplay prevented:", error);
+              setIsMusicPlaying(false);
+            });
+        }
+      });
+    } catch (error) {
+      console.error('Error initializing background music:', error);
+    }
+    
+    return () => {
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.pause();
+        backgroundMusicRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (backgroundMusicRef.current) {
+      try {
+        if (isMusicPlaying) {
+          backgroundMusicRef.current.pause();
+        } else {
+          const playPromise = backgroundMusicRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              console.error("Error playing background music:", error);
+            });
+          }
+        }
+        setIsMusicPlaying(!isMusicPlaying);
+      } catch (error) {
+        console.error('Error toggling music:', error);
+      }
+    }
+  };
+
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      <button
+        onClick={toggleMusic}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          padding: '12px 24px',
+          fontSize: '16px',
+          backgroundColor: '#8B4513',
+          color: '#f4d03f',
+          border: '2px solid #5C2C0C',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontFamily: '"IM Fell English", Georgia, serif',
+          zIndex: 1000,
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+          transform: isMusicPlaying ? 'scale(1.05)' : 'scale(1)',
+          opacity: isMusicPlaying ? '1' : '0.8',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = isMusicPlaying ? 'scale(1.1)' : 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = isMusicPlaying ? 'scale(1.05)' : 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        }}
+      >
+        {isMusicPlaying ? '🎵 Music Off' : '🔇 Music On'}
+      </button>
+      
       <Game />
       {newTitle && (
         <div style={{
