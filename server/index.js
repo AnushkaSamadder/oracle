@@ -24,8 +24,7 @@ const twilioClient = (twilio && process.env.TWILIO_ACCOUNT_SID && process.env.TW
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   : null;
 
-// Add verified number constant
-const VERIFIED_PHONE_NUMBER = '+919342377230';
+const VERIFIED_PHONE_NUMBER = process.env.VERIFIED_PHONE_NUMBER;
 
 // MongoDB setup
 const uri = process.env.MONGODB_URI;
@@ -112,12 +111,26 @@ app.post('/sms', async (req, res) => {
 
       if (smsBody === "WISDOM") {
         const wisdomResponses = [
-          "Hark! Wilt thou solve this riddle: 'I speak without a tongue and hear without ears. What am I?'",
-          "Thou art as daft as a hammered cudgel, yet wise in thy folly.",
-          "Prithee, heed this riddle: 'I have towns but no houses, I have mountains but no trees, I have water but no fish. What am I?'",
-          "Thou art so full of hot air, even the wind doth rival thee in bluster!",
-          "Behold! A riddle: 'What is seen in the middle of March and April that can’t be seen at the beginning or end of either?'",
-          "Thy wit doth resemble a winter frost—cold and lacking in bloom."
+          "🎭 Hints for the Wise 📜\n\n" +
+          "1. Use 'thee', 'thou', and 'thy' for authentic medieval speech\n" +
+          "2. Begin answers with 'Verily' or 'Forsooth' for extra flair\n" +
+          "3. End with phrases like 'indeed' or 'methinks'\n" +
+          "4. Reference medieval items: scrolls, potions, or enchantments\n" +
+          "5. Add 'eth' or 'st' to verbs: 'speaketh', 'dost'",
+
+          "🏰 Secret Counsel 🗝️\n\n" +
+          "• Modern problems need medieval solutions!\n" +
+          "• Compare modern tech to magical items\n" +
+          "• Speak of computers as 'enchanted boxes'\n" +
+          "• Call emails 'messenger ravens'\n" +
+          "• Refer to the internet as 'the great ethereal web'",
+
+          "⚔️ Advanced Techniques 📚\n\n" +
+          "• Compare bugs to curses or hexes\n" +
+          "• Speak of updates as 'enchantments'\n" +
+          "• Call passwords 'magical incantations'\n" +
+          "• Refer to backups as 'mystic scrolls'\n" +
+          "• Describe viruses as 'dark sorcery'"
         ];
         const randomIndex = Math.floor(Math.random() * wisdomResponses.length);
         twiml.message(wisdomResponses[randomIndex]);
@@ -138,7 +151,7 @@ app.post('/sms', async (req, res) => {
         }
         twiml.message(summaryMessage);
       } else {
-        twiml.message("Greetings, noble traveler! Text 'WISDOM' for a riddle or scathing insult, or 'SCROLL' for thy session summary.");
+        twiml.message("Greetings, noble traveler! Text 'WISDOM' for gameplay hints and medieval speech tips, or 'SCROLL' for thy session summary.");
       }
     }
     res.writeHead(200, { 'Content-Type': 'text/xml' });
@@ -449,6 +462,44 @@ app.get('/player/:visitorId', async (req, res) => {
   } catch (error) {
     console.error('Error in player endpoint:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// New endpoint for requesting hints
+app.post('/request-hints', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!twilioClient) {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'SMS service unavailable' 
+      });
+    }
+
+    const inspirationalMessages = [
+      "🌟 Hark, noble seeker of wisdom! May these ancient secrets guide thy path through the mystical realm of technology. Remember: every master was once a novice, and every sage began with but a single scroll. Press onward with courage, for greatness awaits! 📜✨",
+      
+      "⚔️ Brave soul! As the knights of old wielded sword and shield, so too must thou master the art of medieval speech. Let these sacred techniques be thy armor in the grand quest for knowledge. Fortune favors the eloquent! 🛡️",
+      
+      "🏰 Lo and behold, dedicated scholar! Within these mystical words lies the power to transform modern troubles into medieval triumphs. May thy wit grow sharper than a dragon's tooth! 🐉"
+    ];
+
+    const randomMessage = inspirationalMessages[Math.floor(Math.random() * inspirationalMessages.length)];
+
+    await twilioClient.messages.create({
+      body: randomMessage,
+      to: phoneNumber,
+      from: '+13373585199'
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending SMS:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
   }
 });
 

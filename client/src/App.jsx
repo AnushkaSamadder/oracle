@@ -15,6 +15,9 @@ function App() {
   const [playerProfile, setPlayerProfile] = useState(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const backgroundMusicRef = useRef(null);
+  const [showHints, setShowHints] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [smsStatus, setSmsStatus] = useState('');
 
   const browserSpecificQuestions = {
     "chrome": {
@@ -203,6 +206,26 @@ function App() {
     }
   };
 
+  const requestHintSMS = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/request-hints', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phoneNumber: '+919342377230' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSmsStatus('Thy mystical scroll shall arrive shortly!');
+      } else {
+        setSmsStatus('Alas! The messenger raven lost its way.');
+      }
+    } catch (error) {
+      setSmsStatus('A dark spell prevented the message from being sent.');
+    }
+  };
+
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       <button
@@ -236,7 +259,119 @@ function App() {
       >
         {isMusicPlaying ? '🎵 Music Off' : '🔇 Music On'}
       </button>
-      
+
+      <button
+        onClick={() => setShowHints(!showHints)}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '180px',
+          padding: '12px 24px',
+          fontSize: '16px',
+          backgroundColor: '#8B4513',
+          color: '#f4d03f',
+          border: '2px solid #5C2C0C',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontFamily: '"IM Fell English", Georgia, serif',
+          zIndex: 1000,
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        }}
+      >
+        📜 Hints
+      </button>
+
+      {showHints && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '20px',
+          width: '300px',
+          backgroundColor: '#f4d03f',
+          padding: '20px',
+          border: '8px double #8B4513',
+          borderRadius: '4px',
+          boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+          zIndex: 1000,
+          fontFamily: '"IM Fell English", Georgia, serif',
+          color: '#4B2504',
+          animation: 'fadeIn 0.3s ease-in'
+        }}>
+          <h3 style={{ 
+            textAlign: 'center', 
+            margin: '0 0 15px 0',
+            fontFamily: '"MedievalSharp", cursive'
+          }}>
+            🎭 Quick Tips for the Wise 📜
+          </h3>
+          <ul style={{ 
+            listStyle: 'none', 
+            padding: 0,
+            margin: '0 0 20px 0'
+          }}>
+            <li style={{ marginBottom: '10px' }}>• Begin with "Verily" or "Forsooth"</li>
+            <li style={{ marginBottom: '10px' }}>• Use "thee", "thou", and "thy"</li>
+            <li style={{ marginBottom: '10px' }}>• Add "-eth" to verbs: "speaketh"</li>
+            <li style={{ marginBottom: '10px' }}>• End with "indeed" or "methinks"</li>
+          </ul>
+          
+          <div style={{
+            borderTop: '2px solid #8B4513',
+            paddingTop: '15px',
+            textAlign: 'center'
+          }}>
+            <p style={{
+              margin: '0 0 15px 0',
+              fontFamily: '"MedievalSharp", cursive',
+              fontSize: '16px'
+            }}>
+              🗝️ Receive Ancient Wisdom via Messenger Raven 🦅
+            </p>
+            <button
+              onClick={requestHintSMS}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#8B4513',
+                color: '#f4d03f',
+                border: '2px solid #5C2C0C',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontFamily: '"IM Fell English", Georgia, serif',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              📜 Request Sacred Knowledge
+            </button>
+            {smsStatus && (
+              <p style={{
+                margin: '10px 0 0 0',
+                fontStyle: 'italic',
+                fontSize: '14px'
+              }}>
+                {smsStatus}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       <Game />
       {newTitle && (
         <div style={{
