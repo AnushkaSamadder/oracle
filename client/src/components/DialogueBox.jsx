@@ -92,16 +92,18 @@ const DialogueBox = ({
       alignItems: 'center',
       gap: '20px',
       zIndex: 9999,
-      backgroundColor: '#f4d03f',  /* Parchment yellow */
+      backgroundColor: '#f4d03f',
       backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
       backgroundSize: '20px 20px',
-      padding: '30px',
+      padding: '20px',
       border: '8px double #8B4513',
       borderRadius: '4px',
       boxShadow: '0 0 20px rgba(0,0,0,0.3), inset 0 0 30px rgba(139,69,19,0.2)',
-      minWidth: '300px',
+      width: '80%',
+      maxWidth: '600px',
       fontFamily: '"IM Fell English", Georgia, serif',
-      color: '#4B2504'
+      color: '#4B2504',
+      margin: '0 auto'
     }}>
       {playerTitle && (
         <div style={{

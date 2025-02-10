@@ -5,12 +5,13 @@ import MainScene from './scenes/MainScene';
 
 const Game = () => {
   useEffect(() => {
-    // Add loading class
     const container = document.getElementById('game-container');
     if (container) {
       container.classList.add('loading');
     }
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
     const config = {
       type: Phaser.AUTO,
       scale: {
@@ -18,10 +19,11 @@ const Game = () => {
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 1920,
         height: 1080,
-        parent: 'game-container'
+        parent: 'game-container',
+        zoom: isMobile ? 0.5 : 1
       },
       pixelArt: false,
-      backgroundColor: '#2d2d2d', // fallback background if video fails
+      backgroundColor: '#2d2d2d',
       clearBeforeRender: true,
       antialiasGL: true,
       dom: {
@@ -38,14 +40,27 @@ const Game = () => {
     };
 
     const game = new Phaser.Game(config);
-    // Remove loading class when game is ready
+    
+    const handleOrientation = () => {
+      if (game && game.scale) {
+        game.scale.refresh();
+      }
+    };
+    
+    window.addEventListener('orientationchange', handleOrientation);
+    window.addEventListener('resize', handleOrientation);
+
     game.events.once('ready', () => {
       if (container) {
         container.classList.remove('loading');
       }
     });
 
-    return () => { game.destroy(true); };
+    return () => { 
+      window.removeEventListener('orientationchange', handleOrientation);
+      window.removeEventListener('resize', handleOrientation);
+      game.destroy(true); 
+    };
   }, []);
 
   return <div id="game-container"></div>;
