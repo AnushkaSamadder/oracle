@@ -64,47 +64,47 @@ const openai = new OpenAI({
 const VOICE_IDS = {
   answer: {
     name: 'George',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    id: 'JBFqnCBsd6RMkjVDRZzb'
   },
   hunter: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'George',
+    id: 'JBFqnCBsd6RMkjVDRZzb'
   },
   gravedigger: {
     name: 'Callum',
     id: 'N2lVS1w4EtoT3dr4eOWO'
   },
   lumberjack: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Harry (Legacy) ',
+    id: 'SOYHLrjzK2X1ezoPC6cr'
   },
   king: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Dave - deep and gruff',
+    id: 'wkGdo2b62ShJzStNAMBt'
   },
   knight: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Clyde (Legacy)',
+    id: '2EiwWnXFnvU5JabPnv8n'
   },
   knighthorse: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Oxley - Evil Character',
+    id: '2gPFXx8pN3Avh27Dw5Ma'
   },
   miner: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Roger',
+    id: 'CwhRBWXzGAHq8TQ4Fs17'
   },
   merchant: {
-    name: 'Callum',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Thomas (Legacy)',
+    id: 'GBv7mTt0atIp3Br8iCZE'
   },
   wanderer: {
-    name: 'Sarah',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    name: 'Charlotte',
+    id: 'XB0fDUnXU5powFXDhCwa'
   },
   nun: {
     name: 'Sarah',
-    id: 'N2lVS1w4EtoT3dr4eOWO'
+    id: 'EXAVITQu4vr4xnSDxMaL'
   }
 };
 
