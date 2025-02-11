@@ -75,16 +75,16 @@ const VOICE_IDS = {
     id: 'N2lVS1w4EtoT3dr4eOWO'
   },
   lumberjack: {
-    name: 'Harry (Legacy) ',
-    id: 'SOYHLrjzK2X1ezoPC6cr'
+    name: 'Eric',
+    id: 'cjVigY5qzO86Huf0OWal'
   },
   king: {
     name: 'Dave - deep and gruff',
     id: 'wkGdo2b62ShJzStNAMBt'
   },
   knight: {
-    name: 'Clyde (Legacy)',
-    id: '2EiwWnXFnvU5JabPnv8n'
+    name: 'Bill',
+    id: 'pqHfZKP75CvOlQylNhV4'
   },
   knighthorse: {
     name: 'Oxley - Evil Character',
@@ -95,8 +95,8 @@ const VOICE_IDS = {
     id: 'CwhRBWXzGAHq8TQ4Fs17'
   },
   merchant: {
-    name: 'Thomas (Legacy)',
-    id: 'GBv7mTt0atIp3Br8iCZE'
+    name: 'Charlie',
+    id: 'IKne3meq5aSn9XLyUdCD'
   },
   wanderer: {
     name: 'Charlotte',
@@ -146,7 +146,7 @@ app.use((err, req, res, next) => {
 
 // Basic route to confirm the server is running
 app.get('/', (req, res) => {
-  res.json({ status: 'Medieval Shop server is running!' });
+  res.json({ status: 'The Oracle\'s Tavern server is running!' });
 });
 
 // Twilio SMS endpoint – handles incoming SMS commands and replies with medieval wisdom.
@@ -391,7 +391,7 @@ app.get('/generate-questions', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `You must respond with a JSON array containing exactly ${count} medieval-style questions. Format your entire response as a single JSON array like this example: ["How doth one catch a ghost?", "Why doth mine cow give sour milk?"] Do not include any other text, markdown, or formatting - just the JSON array. The questions should be medieval-style inquiries that: 1. Use archaic language (thee, thou, thy, dost) 2. Mix modern concepts with medieval perspectives 3. Be humorous or quirky 4. Relate to daily medieval life or supernatural concerns Example themes: - Love and relationships - Supernatural occurrences - Personal troubles - Kingdom matters - Health and wealth - Odd situations Example questions: 1. "Will my ship reach its destination?" 2. "Will I finish my expedition?" 3. "Can I trust my servant?" 4. "How will 2 gold be worth tomorrow?" 5. "When will the king die?" 6. "Who will be the next king?" 7. "How can I become king?" 8. "How to join the king's guard?" 9. "Can lowfolk marry the princess?" 10. "How can I become a knight without a horse?" 11. "Dost thou think my lord's beard doth attract too many flies?" 12. "Can a peasant dream of marrying a noblewoman?" 13. "How doth one rid the barn of a stubborn mule?" 14. "Where should I hide mine treasure from the tax collectors?" 15. "Will mine crops grow taller if I sing to them?" 16. "What should I do if my wife doth believe in witches?" 17. "How can I ensure my ale flows more smoothly at the tavern?" 18. "What manner of magic can stop mine neighbour's chickens from crowing at dawn?" 19. "Dost thou think mine enemy can read my thoughts?" 20. "How can one tell if a potion is truly cursed?" 21. "Where must I bury a treasure so the thieves shall never find it?" 22. "What should I do if mine servant turns out to be a goblin?" 23. "Can a man marry twice if his first wife hath run off?" 24. "How doth one know if a fairy hath cursed my cow?" 25. "Can a king decree that all must wear hats of gold?" 26. "What should I do if my best sword breaks in battle?" 27. "Can I trust a merchant who smells of garlic?" 28. "How doth one become the royal jester?" 29. "How can I become the next lord of the manor?" 30. "Can lowfolk marry the princess if they bring enough gifts?" 31. "What should I do if the local wizard doth not return mine cloak?" 32. "How can I win favor with the king's court without riches?" 33. "Can a sorcerer be trusted to cure my warts?" 34. "Where might I find a dragon's scale to make a fine cloak?" 35. "How can one tell if a person is truly under a spell?" 36. "What wouldst thou advise if the village is plagued by wild boars?" 37. "Should I tell mine wife I ate the last of the bread?" 38. "How doth one tell if a man is truly a nobleman or just a swindler?" 39. "What dost one do if one's horse refuses to race?" 40. "Can a man change his fate by calling upon the stars?" 41. "How dost thou find the lost key to the castle gates?" 42. "What should I say to a nobleman who speaks only of his gold?" 43. "How do I stop mine dog from chasing the mailman?" 44. "Where might one buy a magic mirror that shows the future?" 45. "How can I ensure mine wine never spoils?" 46. "What should I do if the town crier speaks falsely?" 47. "Is it wrong to challenge the blacksmith to a duel over a broken plow?" Remember: Your entire response must be a valid JSON array of strings. Do not include any other text.`
+          content: `You must respond with a JSON array containing exactly ${count} medieval-style questions. Format your entire response as a single JSON array like this example: ["Is there a spell to make me the richest man in the realm?", "How doth one bury a body?"] Do not include any other text, markdown, or formatting - just the JSON array. The questions should be medieval-style inquiries that: 1. Use archaic language (thee, thou, thy, dost) 2. Mix modern concepts with medieval perspectives 3. Be humorous or quirky 4. Relate to daily medieval life or supernatural concerns Example themes: - Love and relationships - Supernatural occurrences - Personal troubles - Kingdom matters - Health and wealth - Odd situations Example questions: 1. "Will my ship reach its destination?" 2. "Will I finish my expedition?" 3. "Can I trust my servant?" 4. "How will 2 gold be worth tomorrow?" 5. "When will the king die?" 6. "Who will be the next king?" 7. "How can I become king?" 8. "How to join the king's guard?" 9. "Can lowfolk marry the princess?" 10. "How can I become a knight without a horse?" 11. "Dost thou think my lord's beard doth attract too many flies?" 12. "Can a peasant dream of marrying a noblewoman?" 13. "How doth one rid the barn of a stubborn mule?" 14. "Where should I hide mine treasure from the tax collectors?" 15. "Will mine crops grow taller if I sing to them?" 16. "What should I do if my wife doth believe in witches?" 17. "How can I ensure my ale flows more smoothly at the tavern?" 18. "What manner of magic can stop mine neighbour's chickens from crowing at dawn?" 19. "Dost thou think mine enemy can read my thoughts?" 20. "How can one tell if a potion is truly cursed?" 21. "Where must I bury a treasure so the thieves shall never find it?" 22. "What should I do if mine servant turns out to be a goblin?" 23. "Can a man marry twice if his first wife hath run off?" 24. "How doth one know if a fairy hath cursed my cow?" 25. "Can a king decree that all must wear hats of gold?" 26. "What should I do if my best sword breaks in battle?" 27. "Can I trust a merchant who smells of garlic?" 28. "How doth one become the royal jester?" 29. "How can I become the next lord of the manor?" 30. "Can lowfolk marry the princess if they bring enough gifts?" 31. "What should I do if the local wizard doth not return mine cloak?" 32. "How can I win favor with the king's court without riches?" 33. "Can a sorcerer be trusted to cure my warts?" 34. "Where might I find a dragon's scale to make a fine cloak?" 35. "How can one tell if a person is truly under a spell?" 36. "What wouldst thou advise if the village is plagued by wild boars?" 37. "Should I tell mine wife I ate the last of the bread?" 38. "How doth one tell if a man is truly a nobleman or just a swindler?" 39. "What dost one do if one's horse refuses to race?" 40. "Can a man change his fate by calling upon the stars?" 41. "How dost thou find the lost key to the castle gates?" 42. "What should I say to a nobleman who speaks only of his gold?" 43. "How do I stop mine dog from chasing the mailman?" 44. "Where might one buy a magic mirror that shows the future?" 45. "How can I ensure mine wine never spoils?" 46. "What should I do if the town crier speaks falsely?" 47. "Is it wrong to challenge the blacksmith to a duel over a broken plow?" Remember: Your entire response must be a valid JSON array of strings. Do not include any other text.`
         }
       ]
     };
