@@ -1,6 +1,6 @@
 # The Oracle's Tavern 🏰
 
-A medieval-themed interactive web application where travelers seek wisdom from mystical patrons in an enchanted tavern. Each character presents unique questions about modern technology problems dressed in medieval language, creating an engaging and humorous experience.
+Imagine if ChatGPT or the other LLMs were a thing in medieval times? Well you no longer have to! The Oracle's Tavern is a medieval-themed interactive web application where travelers seek wisdom from mystical patrons in an enchanted tavern. Each character presents unique questions about problems of that time, creating an engaging and humorous experience.
 
 ## 🎮 Features
 
@@ -101,8 +101,7 @@ The game features various medieval characters, each with unique animations and v
 
 The game includes:
 - Background medieval music
-- Character-specific sound effects
-- Coin collection sounds
+- Character-specific sound effects and voices
 - Various interaction sounds
 
 ## 📱 Mobile Support
@@ -142,4 +141,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Medieval character assets
 - Sound effects and music
 - Font providers
-- API service providers
+- API service providers: Elevenlabs, Nebius, Twilio and Fingerprint
