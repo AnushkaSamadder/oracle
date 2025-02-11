@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
+const { ElevenLabsClient } = require('elevenlabs');
 // Require the Twilio client library for SMS functionality
 let twilio;
 try {
@@ -11,12 +12,14 @@ try {
 }
 // Require the OpenAI client
 const OpenAI = require('openai');
+const axios = require('axios');
+
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Validate required environment variables
+// Validate required environment vAria - Sexy Female Villain Voicebles
 if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-  console.warn('Warning: TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables are required for SMS features');
+  console.warn('Warning: TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment vAria - Sexy Female Villain Voicebles are required for SMS features');
 }
 
 // Initialize Twilio client if credentials are available
@@ -56,6 +59,75 @@ const openai = new OpenAI({
   baseURL: 'https://api.studio.nebius.ai/v1/',
   apiKey: process.env.NEBIUS_API_KEY,
 });
+
+// Voice ID mapping for ElevenLabs
+const VOICE_IDS = {
+  answer: {
+    name: 'George',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  hunter: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  gravedigger: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  lumberjack: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  king: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  knight: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  knighthorse: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  miner: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  merchant: {
+    name: 'Callum',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  wanderer: {
+    name: 'Sarah',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  },
+  nun: {
+    name: 'Sarah',
+    id: 'N2lVS1w4EtoT3dr4eOWO'
+  }
+};
+
+// Initialize ElevenLabs with error checking
+const initializeElevenLabs = () => {
+  const apiKey = process.env.ELEVEN_LABS_API_KEY;
+  
+  if (!apiKey) {
+    console.error('Missing required ElevenLabs configuration. Please check your .env file.');
+    return null;
+  }
+  
+  return new ElevenLabsClient({
+    apiKey: apiKey
+  });
+};
+
+const voice = initializeElevenLabs();
+
+console.log('Available voices:', VOICE_IDS);
+
+// Simple in-memory cache for NPC questions
+const audioCache = new Map();
 
 // Middleware
 app.use(cors());
@@ -125,7 +197,7 @@ app.post('/sms', async (req, res) => {
           "• Call emails 'messenger ravens'\n" +
           "• Refer to the internet as 'the great ethereal web'",
 
-          "⚔️ Advanced Techniques 📚\n\n" +
+          "⚔️ Advanced Techniques ���\n\n" +
           "• Compare bugs to curses or hexes\n" +
           "• Speak of updates as 'enchantments'\n" +
           "• Call passwords 'magical incantations'\n" +
@@ -181,7 +253,7 @@ app.post('/evaluate', async (req, res) => {
 
     // Validate API key
     if (!process.env.NEBIUS_API_KEY) {
-      throw new Error('NEBIUS_API_KEY environment variable is not set');
+      throw new Error('NEBIUS_API_KEY environment vAria - Sexy Female Villain Voiceble is not set');
     }
 
     // Build the evaluation payload
@@ -303,7 +375,7 @@ app.get('/generate-questions', async (req, res) => {
   try {
     // Validate API key
     if (!process.env.NEBIUS_API_KEY) {
-      throw new Error('NEBIUS_API_KEY environment variable is not set');
+      throw new Error('NEBIUS_API_KEY environment vAria - Sexy Female Villain Voiceble is not set');
     }
 
     const count = parseInt(req.query.count) || 1; // Number of questions to generate
@@ -499,6 +571,63 @@ app.post('/request-hints', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: error.message 
+    });
+  }
+});
+
+// Voice synthesis endpoint
+app.post('/tts', async (req, res) => {
+  try {
+    const { text, characterType } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    console.log('TTS Request:', { characterType, text });
+
+    const normalizedType = characterType?.toLowerCase().replace(/[^a-z]/g, '') || 'answer';
+    const voiceData = VOICE_IDS[normalizedType];
+    
+    console.log('Voice Selection:', { normalizedType, voiceName: voiceData?.name });
+
+    try {
+      // Generate audio using ElevenLabs
+      const audioStream = await voice.generate({
+        text: text,
+        voice: voiceData?.name || "Sarah",  // Default to Sarah if voice not found
+        model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75
+        }
+      });
+
+      // Convert stream to buffer
+      const chunks = [];
+      for await (const chunk of audioStream) {
+        chunks.push(chunk);
+      }
+      const audioBuffer = Buffer.concat(chunks);
+
+      // Convert buffer to base64
+      const audioContent = audioBuffer.toString('base64');
+      
+      console.log('Audio generated successfully');
+
+      res.json({ audioContent });
+    } catch (apiError) {
+      console.error('ElevenLabs API Error:', apiError);
+      return res.status(500).json({
+        error: 'TTS Generation Failed',
+        message: apiError.message || 'Error generating audio'
+      });
+    }
+  } catch (error) {
+    console.error('TTS Error:', error);
+    res.status(500).json({
+      error: 'TTS Generation Failed',
+      message: error.message || 'Internal server error'
     });
   }
 });

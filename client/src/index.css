@@ -12,15 +12,15 @@ body {
 }
 
 #game-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  background-color: #2d2d2d;
-  transition: background-color 0.3s ease;
   width: 100vw;
   height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #2d2d2d;
+  transition: background-color 0.3s ease;
   touch-action: none;
+  z-index: 0;
 }
 
 #game-container.loading::before {

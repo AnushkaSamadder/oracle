@@ -63,7 +63,16 @@ const Game = () => {
     };
   }, []);
 
-  return <div id="game-container"></div>;
+  return (
+    <div id="game-container" style={{
+      width: '100vw',
+      height: '100vh',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: 0
+    }}></div>
+  );
 };
 
 export default Game;
